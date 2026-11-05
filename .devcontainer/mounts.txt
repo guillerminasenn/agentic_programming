@@ -1,0 +1,9 @@
+# Folders on this computer to mount in the dev container, one per line:
+#
+#     <host folder> | <container folder> | ro or rw
+#
+# ro is read-only inside the container, rw is read-write. After changing this file, run
+# .devcontainer_template/update.py on the host and rebuild the container. Examples:
+#
+# C:/data    | /data/dataset | ro
+# C:/results | /data/results | rw
