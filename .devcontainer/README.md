@@ -1,50 +1,17 @@
-# Portable Minimal Dev Container Template
+# Portable Minimal Dev Container
 
 A general-purpose Linux development environment with Python 3.12, Git, SSH and
 uv 0.10.9. Python uses `/opt/venv`, already on `PATH`. There are no application
 dependencies, automatic package installs, GUI libraries, C++ toolchain additions
 or persistent environment volumes. Add project-specific requirements only when
-needed. No `pyproject.toml` or `uv.lock` is required to generate this container.
-
-## Adopt in Any Repository
-
-Put this entire `.devcontainer_template/` folder in the repository root. Keep the
-template README, updater, scripts and tests together. Commit the template, and
-add these rules to the repository's existing files without replacing other rules:
-
-In `.gitignore`:
-
-```gitignore
-/.devcontainer/
-__pycache__/
-```
-
-In `.gitattributes`:
-
-```gitattributes
-*.sh text eol=lf
-```
-
-If the repository already has a `.devcontainer/`, review and back it up outside
-the repository before generating a replacement. The updater overwrites generated
-files except `mounts.txt`; it does not delete obsolete files from an older setup.
-Start with no `.devcontainer/` for a clean migration. If that folder was tracked,
-remove the old files from Git tracking when adopting the template; an ignore rule
-alone does not untrack them. Never put private keys in either folder.
+needed. No `pyproject.toml` or `uv.lock` is required to build this container.
 
 ## Host Prerequisites
 
-Install VS Code and its **Dev Containers** extension. For a WSL-hosted checkout,
-also install the **WSL** extension. Install uv on the host to run the updater:
-
-```powershell
-winget install --id=astral-sh.uv -e
-```
-
-Open a new terminal afterwards. For other platforms, use
-[uv's installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
-Alternatively, use host Python 3.9 or newer; the updater has no dependencies.
-Host uv/Python is only for generation; the image provides its own Python and uv.
+Install VS Code, its **Dev Containers** extension, and a compatible container
+engine accessible from VS Code, such as Docker. For a WSL-hosted checkout, also
+install the **WSL** extension. Host Python and uv are not required; the container
+image provides both. The Windows/WSLc setup below is an alternative to Docker.
 
 ### Windows and WSL Containers
 
@@ -124,40 +91,33 @@ when investigating with `wslc inspect`. The exact terminal deadlock is unproven.
 ### WSL-Hosted Repositories: Disable UID Adjustment
 
 When starting VS Code from WSL for a repository stored in WSL and using WSLc,
-keep this in `.devcontainer_template/devcontainer.json`:
+keep this in `.devcontainer/devcontainer.json`:
 
 ```json
 "updateRemoteUserUID": false
 ```
 
-It is already set in this template. Otherwise, Dev Containers can attempt a UID
+It is already set in this configuration. Otherwise, Dev Containers can attempt a UID
 adjustment using an option WSLc does not support. This is a **separate** issue
-from the launch hang; the wrapper alone does not fix it. Generate again and
-rebuild after changing the template. This is not a universal recommendation for
+from the launch hang; the wrapper alone does not fix it. Rebuild after changing
+the configuration. This is not a universal recommendation for
 Docker on Linux: disabling UID matching can leave bind-mount permission issues
 when the host user's UID differs from the container user's UID. Check that you
 can edit the workspace as `vscode`; do not compensate by running as root or making
 the checkout world-writable.
 
-## Generate and Open
+## Open Directly in VS Code
 
-Run on the **host**, from the repository root:
-
-```sh
-uv run --no-config .devcontainer_template/update.py
-```
-
-Or, with host Python 3.9+:
+On the **host**, open the repository root, not the `.devcontainer/` subfolder:
 
 ```sh
-python3 .devcontainer_template/update.py
+code .
 ```
 
-On Windows use `python` if that is the Python command. The first run creates
-`.devcontainer/`, `.devcontainer/mounts.txt` and a template hash stamp. No project
-packages are installed by the updater. Open the repository in VS Code and choose
-**Dev Containers: Reopen in Container**; if replacing an existing configuration,
-use **Dev Containers: Rebuild Container** instead.
+Choose **Dev Containers: Reopen in Container** from the Command Palette. VS Code
+reads `.devcontainer/devcontainer.json` and builds the image using the included
+Dockerfile. If replacing an existing configuration, use **Dev Containers: Rebuild
+Container** instead. No setup script or project package installation is required.
 
 In the container terminal, check:
 
@@ -170,31 +130,35 @@ touch .devcontainer-write-check && rm .devcontainer-write-check
 ```
 
 Expect `vscode`, Python 3.12, uv 0.10.9, `/opt/venv/bin/python`, and a successful
-workspace write. The generated `.devcontainer/` is deliberately read-only inside
-the container. The workspace and template are otherwise writable.
+workspace write. `.devcontainer/` is deliberately mounted read-only inside the
+container; edit its files on the host. The rest of the workspace is writable.
 
 ## Mounts and Configuration Changes
 
 The repository is mounted automatically. For additional data/results folders,
-edit `.devcontainer/mounts.txt` **on the host**, one existing folder per line:
+edit the `mounts` array in `.devcontainer/devcontainer.json` **on the host**. Keep
+the existing read-only mount for `.devcontainer/` and add entries such as:
 
-```text
-C:/data    | /data/dataset | ro
-C:/results | /data/results | rw
+```json
+"mounts": [
+  "source=${localWorkspaceFolder}/.devcontainer,target=${containerWorkspaceFolder}/.devcontainer,type=bind,readonly",
+  "source=C:/data,target=/data/dataset,type=bind,readonly",
+  "source=C:/results,target=/data/results,type=bind"
+]
 ```
 
 For a WSL-hosted checkout, use paths visible to that WSL host and accepted by
-WSLc, such as `/home/YOUR-USER/data`. `ro` means read-only, `rw` means read-write.
-Leave the examples commented out if you need no extra mounts. Folder names cannot
-contain commas or `|`, and container targets must be absolute and unique. The
-updater rejects missing host folders before changing the generated configuration.
+WSLc, such as `/home/YOUR-USER/data`. On Linux or macOS, use the appropriate host
+paths. `readonly` makes a mount read-only; omitting it makes the mount read-write.
+Host folders must exist, source paths cannot contain commas, and container targets
+must be absolute and unique.
 
-Edit shared settings in `.devcontainer_template/`, not generated files. After
-changing mounts, editing the template or pulling template updates, rerun the
-updater on the host and choose **Dev Containers: Rebuild Container**. Local
-`mounts.txt` is preserved; other generated files are overwritten. Attach-time
-checks report template changes and SSH agent availability without blocking VS
-Code. These checks do not install packages or regenerate the configuration.
+The included `mounts.txt` is a legacy input for a generator that is not included
+here. Editing it does not change mounts; edit `devcontainer.json` directly.
+
+After changing the Dockerfile, mounts, or container configuration, choose
+**Dev Containers: Rebuild Container**. The SSH attach-time check only reports
+agent availability; it does not install packages or change configuration.
 
 ## Python Packages
 
@@ -295,13 +259,14 @@ including coding agents, can use forwarded credentials to request authentication
 signatures and access mounted files and reachable services. Forwarding protects
 the key file, not its use. Enable credentials only in trusted containers.
 
-## Template Tests
+## Configuration Checks
 
-Tests use temporary directories and do not modify the repository's container:
+After opening or rebuilding the container, run the environment checks above and
+check SSH-agent forwarding:
 
 ```sh
-python3 -m unittest discover -s .devcontainer_template/tests -v
+bash .devcontainer/scripts/check-ssh-agent.sh
 ```
 
-Use `python` on hosts where that is the Python command. Test on the host or in an
-existing Python-enabled container before generating and rebuilding after changes.
+Verify configuration changes by rebuilding the container and checking the
+environment, workspace permissions, and any added mounts.

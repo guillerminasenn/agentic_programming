@@ -5,11 +5,9 @@
   },
   "mounts": [
     "source=${localWorkspaceFolder}/.devcontainer,target=${containerWorkspaceFolder}/.devcontainer,type=bind,readonly"
-    // Your mounts from .devcontainer/mounts.txt (data and results folders), added by update.py
   ],
   "postAttachCommand": {
-    "ssh": "bash .devcontainer/scripts/check-ssh-agent.sh",
-    "template": "bash .devcontainer/scripts/check-template.sh"
+    "ssh": "bash .devcontainer/scripts/check-ssh-agent.sh"
   },
   "customizations": {
     "vscode": {
