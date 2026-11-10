@@ -1,0 +1,51 @@
+{
+  "name": "Minimal Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/.devcontainer,target=${containerWorkspaceFolder}/.devcontainer,type=bind,readonly"
+  ],
+  "postAttachCommand": {
+    "ssh": "bash .devcontainer/scripts/check-ssh-agent.sh"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        // Muted green accents for the container, while the active theme sets backgrounds and text.
+        "workbench.colorCustomizations": {
+          // Chat messages (chat only)
+          "chat.requestBackground": "#557A601F",
+          "chat.requestBorder": "#648A70",
+          "chat.avatarBackground": "#648A70",
+          "chat.avatarForeground": "#ffffff",
+          "chat.slashCommandBackground": "#557A601F",
+
+          // Green input accents (also affect search, settings and other input boxes)
+          "input.border": "#648A70",
+          "focusBorder": "#648A70",
+
+          "input.background": "#557A601F",
+
+          // Green send/"Enter" button (also affects other buttons, e.g. "Install")
+          "button.background": "#4F795C",
+          "button.hoverBackground": "#3F654C",
+          "button.foreground": "#ffffff",
+
+          // Inline chat in the editor (Ctrl+I), chat only
+          "inlineChatInput.border": "#648A70",
+          "inlineChatInput.background": "#557A601F"
+        }
+      }
+    }
+  },
+  "init": true,
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": false
+}

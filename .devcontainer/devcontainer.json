@@ -47,5 +47,5 @@
   },
   "init": true,
   "remoteUser": "vscode",
-  "updateRemoteUserUID": false
+  "updateRemoteUserUID": true
 }
